@@ -6,6 +6,8 @@ using Mutagen.Bethesda.Synthesis;
 using Mutagen.Bethesda.Skyrim;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
+using DynamicData;
+using Mutagen.Bethesda.Plugins;
 
 namespace BaboKeywordPatcher
 {
@@ -14,6 +16,7 @@ namespace BaboKeywordPatcher
         public bool ArmorPrettyDefault;
         public bool ArmorEroticDefault;
         public bool EroticDresses;
+        public bool NoBikiniForBra;
     }
     
     public class Program
@@ -132,20 +135,74 @@ namespace BaboKeywordPatcher
             SLA_ArmorHalfNakedBikini = LoadKeyword(state, "SLA_ArmorHalfNakedBikini");
         }
 
-        private static void AddTag(Armor AEO, IKeywordGetter tag)
+        private static void AddTag(Armor armorEditObj, IKeywordGetter tag)
         {
-            System.Console.WriteLine("Added keyword " + tag.ToString() + " to armor " + AEO.Name);
-            if (AEO.Keywords == null)
+          Console.WriteLine("Adding keyword " + tag.ToString() + " to armor " + armorEditObj.Name);
+            if (armorEditObj.Keywords == null)
             {
-                System.Console.WriteLine("AOE.Keywords == null: " + AEO);
-                // AEO.Keywords!.Add(tag);
+                Console.WriteLine("armorEditObj.Keywords == null: " + armorEditObj);
+            }
+            else if (!armorEditObj.Keywords.Contains(tag))
+            {
+                armorEditObj.Keywords!.Add(tag);
+            }
+        }
+
+        private static bool HasTag(IPatcherState<ISkyrimMod, ISkyrimModGetter> state, Armor armorEditObj, string tag)
+        {
+            // Console.WriteLine("Checking for keyword " + tag + " on armor " + armorEditObj.Name);
+            if (armorEditObj.Keywords == null)
+            {
+                // Console.WriteLine("armorEditObj.Keywords == null: " + armorEditObj);
             }
             else
             {
-                if (!AEO.Keywords.Contains(tag))
+                foreach (var kywd in armorEditObj.Keywords)
                 {
-                    AEO.Keywords!.Add(tag);
+                    kywd.TryResolve(state.LinkCache, out var kywdFormKey);
+                    if (kywdFormKey == null)
+                    {
+                        Console.WriteLine("Failed to get keyword for: " + kywd);
+                        return false;
+                    }
+                    if (kywdFormKey.EditorID != null && kywdFormKey.EditorID.ToUpper().Equals(tag.ToUpper()))
+                    {
+                        // Console.WriteLine(armorEditObj.Name + " has keyword " + tag);
+                        return true;
+                    }
                 }
+            }
+            // Console.WriteLine(armorEditObj.Name + " does not have keyword " + tag);
+            return false;
+        }
+
+        private static void RemoveTag(IPatcherState<ISkyrimMod, ISkyrimModGetter> state, Armor armorEditObj, string tag)
+        {
+            Console.WriteLine("Removing keyword " + tag.ToString() + " on armor " + armorEditObj.Name);
+            if (armorEditObj.Keywords == null)
+            {
+                Console.WriteLine("armorEditObj.Keywords == null: " + armorEditObj);
+            }
+            else
+            {
+                // Have to bend over backwards here to create new form keys based on the found keywords (because loss of scope?) and can't remove while iterating
+                FormKey kywdForm = new FormKey();
+                foreach (var kywd in armorEditObj.Keywords)
+                {
+                    kywd.TryResolve(state.LinkCache, out var kywdFormKey);
+                    if (kywdFormKey == null)
+                    {
+                        Console.WriteLine("Failed to get keyword for: " + kywd);
+                        return;
+                    }
+                    if (kywdFormKey.EditorID != null && kywdFormKey.EditorID.ToUpper().Equals(tag.ToUpper()))
+                    {
+                        // Console.WriteLine("Keyword found: " + kywdFormKey.EditorID + "; modkey: " + kywdFormKey.FormKey.ModKey + ", ID: " + kywdFormKey.FormKey.ID);
+                        kywdForm = new FormKey(new ModKey(kywdFormKey.FormKey.ModKey.Name, kywdFormKey.FormKey.ModKey.Type), kywdFormKey.FormKey.ID);
+                    }
+                }
+                // Console.WriteLine("Removing keyword " + tag.ToString() + " (" + kywdForm.ModKey + ":" + kywdForm.ID + ") on armor " + armorEditObj.Name);
+                armorEditObj.Keywords!.Remove(kywdForm);
             }
         }
 
@@ -159,7 +216,7 @@ namespace BaboKeywordPatcher
 
             if (armorEditObj == null)
             {
-                System.Console.WriteLine("Armor is null for " + name);
+                Console.WriteLine("Armor is null for " + name);
                 return;
             }
             // SLA_ArmorBondage
@@ -181,9 +238,13 @@ namespace BaboKeywordPatcher
             }
 
             // EroticArmor
-            if (StrMatch(name, "suit", isPart) ||  StrMatch(name, "latex", isPart) || StrMatch(name, "rubber", isPart) ||
-                StrMatch(name, "ebonite", isPart) || StrMatch(name, "slut", isPart) || StrMatch(name, "lingerie", isPart) ||
-                (StrMatch(name, "dress", isPart) && Settings.Value.EroticDresses)
+            if (StrMatch(name, "suit", isPart)
+                || StrMatch(name, "latex", isPart)
+                || StrMatch(name, "rubber", isPart)
+                || StrMatch(name, "ebonite", isPart)
+                || StrMatch(name, "slut", isPart)
+                || StrMatch(name, "lingerie", isPart)
+                || (StrMatch(name, "dress", isPart) && Settings.Value.EroticDresses)
                 )
             {
                 matched = true;
@@ -203,28 +264,33 @@ namespace BaboKeywordPatcher
                 AddTag(armorEditObj, SLA_ArmorHarness);
             }
             // SLA_ArmorSpendex
-            if (StrMatch(name, "suit", isPart) || StrMatch(name, "spandex", isPart) || StrMatch(name, "spendex", isPart) || StrMatch(name, "ebonite", isPart))
+            if (StrMatch(name, "suit", isPart)
+                || StrMatch(name, "spandex", isPart)
+                || StrMatch(name, "spendex", isPart)
+                || StrMatch(name, "ebonite", isPart))
             {
                 matched = true;
                 AddTag(armorEditObj, SLA_ArmorSpendex);
             }
             // SLA_ArmorTransparent
-            if (StrMatch(name, "transparent", isPart) || StrMatchCS(name, "TR"))
+            if (StrMatch(name, "transparent", isPart)
+                || StrMatchCS(name, "TR"))
             {
                 matched = true;
                 AddTag(armorEditObj, SLA_ArmorTransparent);
             }
             // SLA_BootsHeels
             IBodyTemplateGetter? bodyTemplate = armor.BodyTemplate;
-            if ((IsDeviousRenderedItem(name) && StrMatch(name, "boots", isPart)) || 
-                (StrMatch(name, "heels", isPart) && !StrMatch(name, "wheel", isPart) && 
-                bodyTemplate != null && bodyTemplate.FirstPersonFlags.HasFlag(BipedObjectFlag.Feet)))
+            if ((IsDeviousRenderedItem(name) && StrMatch(name, "boots", isPart))
+                || (StrMatch(name, "heels", isPart) && !StrMatch(name, "wheel", isPart) && bodyTemplate != null && bodyTemplate.FirstPersonFlags.HasFlag(BipedObjectFlag.Feet)))
             {
                 matched = true;
                 AddTag(armorEditObj, SLA_BootsHeels);
             }
             //SLA_VaginalDildo
-            if ((StrMatch(name, "plug", isPart) && StrMatch(name, "vag", isPart)) || StrMatch(name, "vaginal", isPart) || StrMatch(name, "vibrator", isPart))
+            if ((StrMatch(name, "plug", isPart) && StrMatch(name, "vag", isPart))
+                || StrMatch(name, "vaginal", isPart)
+                || StrMatch(name, "vibrator", isPart))
             {
                 matched = true;
                 if (StrMatch(name, "beads", isPart))
@@ -237,7 +303,9 @@ namespace BaboKeywordPatcher
                 }
             }
             // SLA_AnalPlug
-            if (StrMatch(name, "anal", isPart) || StrMatch(name, "buttplug", isPart) || StrMatch(name, "vibrator", isPart))
+            if (StrMatch(name, "anal", isPart)
+                || StrMatch(name, "buttplug", isPart)
+                || StrMatch(name, "vibrator", isPart))
             {
                 matched = true;
                 if (StrMatch(name, "tail", isPart))
@@ -252,23 +320,23 @@ namespace BaboKeywordPatcher
                 {
                     AddTag(armorEditObj, SLA_AnalPlug);
                 }
-                
             }
             // SLA_PiercingClit
-            if (StrMatch(name, "piercingv", isPart) || StrMatch(name, "vpiercing", isPart))
+            if (StrMatch(name, "piercingv", isPart)
+                || StrMatch(name, "vpiercing", isPart))
             {
                 matched = true;
                 AddTag(armorEditObj, SLA_PiercingClit);
             }
             // SLA_PiercingNipple
-            if (StrMatch(name, "piercingn", isPart) || StrMatch(name, "npiercing", isPart))
+            if (StrMatch(name, "piercingn", isPart)
+                || StrMatch(name, "npiercing", isPart))
             {
                 matched = true;
                 AddTag(armorEditObj, SLA_PiercingNipple);
             }
             // SLA_BraArmor
-            if (!StrMatch(name, "bracer", isPart) && !StrMatch(name, "brawn", isPart) && (StrMatch(name, "bra", isPart) || StrMatch(name, "bikini top", isPart) || 
-                (StrMatch(name, "undergarment", isPart) && StrMatch(name, "upper", isPart))))
+            if (!StrMatch(name, "bracer", isPart) && !StrMatch(name, "brawn", isPart) && (StrMatch(name, "bra", isPart) || StrMatch(name, "bikini top", isPart) || (StrMatch(name, "undergarment", isPart) && StrMatch(name, "upper", isPart))))
             {
                 matched = true;
                 AddTag(armorEditObj, SLA_BraArmor);
@@ -279,14 +347,19 @@ namespace BaboKeywordPatcher
                 AddTag(armorEditObj, SLA_ArmorHalfNakedBikini);
             }
             // SLA_ThongT
-            if (StrMatch(name, "thong", isPart) || StrMatch(name, "bottom", isPart))
+            if (StrMatch(name, "thong", isPart)
+                || StrMatch(name, "bottom", isPart))
             {
                 matched = true;
                 AddTag(armorEditObj, SLA_ThongT);
             }
             //SLA_PantiesNormal
-            if (StrMatch(name, "panties", isPart) || StrMatch(name, "panty", isPart) || StrMatch(name, "underwear", isPart) || StrMatch(name, "binkini bot", isPart) || 
-                StrMatch(name, "pants", isPart) || (StrMatch(name, "undergarment", isPart)  && StrMatch(name, "lower", isPart)))
+            if (StrMatch(name, "panties", isPart)
+                || StrMatch(name, "panty", isPart)
+                || StrMatch(name, "underwear", isPart)
+                || StrMatch(name, "binkini bot", isPart)
+                || StrMatch(name, "pants", isPart)
+                || (StrMatch(name, "undergarment", isPart)  && StrMatch(name, "lower", isPart)))
             {
                 matched = true;
                 AddTag(armorEditObj, SLA_PantiesNormal);
@@ -311,7 +384,8 @@ namespace BaboKeywordPatcher
             }
             // All vanilla armors
             if (Settings.Value.ArmorPrettyDefault && !matched && (StrMatch(name, "armor", true) || StrMatch(name, "cuiras", true) || StrMatch(name, "robes", true)))
-            { // I use a skimpy armor replacer (But not to the level of bikini). Having ArmorPretty on all armors is appropriate.
+            {
+                // I use a skimpy armor replacer (But not to the level of bikini). Having ArmorPretty on all armors is appropriate.
                 matched = true;
                 AddTag(armorEditObj, SLA_ArmorPretty);
             }
@@ -320,9 +394,16 @@ namespace BaboKeywordPatcher
                 matched = true;
                 AddTag(armorEditObj, EroticArmor);
             }
+            // If set, remove SLA_ArmorHalfNakedBikini on armors tagged SOS_Revealing
+            // Had to switch to strings because mods like having their own copy of SOS_Revealing (to avoid more masters) which is a problem for this purpose
+            if (Settings.Value.NoBikiniForBra && HasTag(state, armorEditObj, "SOS_Revealing") && HasTag(state, armorEditObj, "SLA_ArmorHalfNakedBikini"))
+            {
+                matched = true;
+                RemoveTag(state, armorEditObj, "SLA_ArmorHalfNakedBikini");
+            }
             if (matched)
             {
-                // System.Console.WriteLine("Matched: " + name);
+                // Console.WriteLine("Matched: " + name);
                 state.PatchMod.Armors.Set(armorEditObj);
             }
         }
@@ -346,13 +427,12 @@ namespace BaboKeywordPatcher
                     // skip armor that is non-playable or a shield
                     if (armorGetter.MajorFlags.HasFlag(Armor.MajorFlag.NonPlayable)) continue;
                     if (armorGetter.MajorFlags.HasFlag(Armor.MajorFlag.Shield)) continue;
-                    // skip armor that is head, hair, circlet, hands, feet, rings, or amulets
+                    // skip armor that is head, hair, circlet, rings, or amulets
                     if (armorGetter.BodyTemplate != null)
                     {
                         if (armorGetter.BodyTemplate.FirstPersonFlags.HasFlag(BipedObjectFlag.Head)) continue;
                         if (armorGetter.BodyTemplate.FirstPersonFlags.HasFlag(BipedObjectFlag.Hair)) continue;
                         if (armorGetter.BodyTemplate.FirstPersonFlags.HasFlag(BipedObjectFlag.Circlet)) continue;
-                        //if (armorGetter.BodyTemplate.FirstPersonFlags.HasFlag(BipedObjectFlag.Hands)) continue; // - Mittens
                         if (armorGetter.BodyTemplate.FirstPersonFlags.HasFlag(BipedObjectFlag.Ring)) continue;
                         if (armorGetter.BodyTemplate.FirstPersonFlags.HasFlag(BipedObjectFlag.Amulet)) continue;
                     }
@@ -377,10 +457,10 @@ namespace BaboKeywordPatcher
                 // MoreNastyCritters breaks the patching process. Ignore it.
                 catch (Exception e)
                 {
-                    System.Console.WriteLine("Caught exception: " + e);
+                    Console.WriteLine("Caught exception: " + e);
                 }
             }
-            System.Console.WriteLine("Done.");
+            Console.WriteLine("Done.");
         }
     }
 }
