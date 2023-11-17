@@ -357,7 +357,7 @@ namespace BaboKeywordPatcher
                 AddTag(armorEditObj, SLA_ThongT);
             }
             // SLA_ArmorHalfNaked
-            if (StrMatch(name, "lewd", isPart)
+            if (StrMatch(name, "lewd", isPart))
             {
                 matched = true;
                 AddTag(armorEditObj, SLA_ArmorHalfNaked);
@@ -376,22 +376,22 @@ namespace BaboKeywordPatcher
                 AddTag(armorEditObj, SLA_PantiesNormal);
             }
             //SLA_HasStockings
-            if (StrMatch(name, "stockings", isPart))
+            if (StrMatch(name, "stockings", isPart)
                 || StrMatch(name, "stocking", isPart)
                 || StrMatch(name, "pantyhose", isPart)
-                || StrMatch(name, "thigh-high", isPart)
+                || StrMatch(name, "thigh-high", isPart))
             {
                 matched = true;
                 AddTag(armorEditObj, SLA_HasStockings);
             }
             //SLA_HasLeggings
-            if (StrMatch(name, "leggings", isPart))
-                || StrMatch(name, "legging", isPart)
+            if (StrMatch(name, "leggings", isPart)
+                || StrMatch(name, "legging", isPart))
             {
                 matched = true;
                 AddTag(armorEditObj, SLA_HasLeggings);
             }
-            //SLA_HasLeggings
+            //SLA_MiniSkirt
             if (StrMatch(name, "skirt", isPart))
             {
                 matched = true;
