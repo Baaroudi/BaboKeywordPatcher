@@ -94,6 +94,7 @@ namespace BaboKeywordPatcher
         public static IKeywordGetter? SLA_HasStockings;
         public static IKeywordGetter? SLA_MiniSkirt;
         public static IKeywordGetter? SLA_ArmorHalfNakedBikini;
+        public static IKeywordGetter? SLA_ArmorHalfNaked;
 
         public static void LoadKeywords(IPatcherState<ISkyrimMod, ISkyrimModGetter> state)
         {
@@ -133,6 +134,7 @@ namespace BaboKeywordPatcher
             SLA_HasStockings = LoadKeyword(state, "SLA_HasStockings");
             SLA_MiniSkirt = LoadKeyword(state, "SLA_MiniSkirt");
             SLA_ArmorHalfNakedBikini = LoadKeyword(state, "SLA_ArmorHalfNakedBikini");
+            SLA_ArmorHalfNaked = LoadKeyword(state, "SLA_ArmorHalfNaked");
         }
 
         private static void AddTag(Armor armorEditObj, IKeywordGetter tag)
@@ -239,6 +241,7 @@ namespace BaboKeywordPatcher
 
             // EroticArmor
             if (StrMatch(name, "suit", isPart)
+                || StrMatch(name, "cuirass", isPart)
                 || StrMatch(name, "latex", isPart)
                 || StrMatch(name, "rubber", isPart)
                 || StrMatch(name, "ebonite", isPart)
@@ -356,6 +359,8 @@ namespace BaboKeywordPatcher
             //SLA_PantiesNormal
             if (StrMatch(name, "panties", isPart)
                 || StrMatch(name, "panty", isPart)
+                || StrMatch(name, "pantie", isPart)
+                || StrMatch(name, "panti", isPart)
                 || StrMatch(name, "underwear", isPart)
                 || StrMatch(name, "binkini bot", isPart)
                 || StrMatch(name, "pants", isPart)
@@ -366,12 +371,16 @@ namespace BaboKeywordPatcher
             }
             //SLA_HasStockings
             if (StrMatch(name, "stockings", isPart))
+                || StrMatch(name, "stocking", isPart)
+                || StrMatch(name, "pantyhose", isPart)
+                || StrMatch(name, "thigh-high", isPart)
             {
                 matched = true;
                 AddTag(armorEditObj, SLA_HasStockings);
             }
             //SLA_HasLeggings
             if (StrMatch(name, "leggings", isPart))
+                || StrMatch(name, "legging", isPart)
             {
                 matched = true;
                 AddTag(armorEditObj, SLA_HasLeggings);
