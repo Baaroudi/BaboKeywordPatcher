@@ -356,6 +356,12 @@ namespace BaboKeywordPatcher
                 matched = true;
                 AddTag(armorEditObj, SLA_ThongT);
             }
+            // SLA_ArmorHalfNaked
+            if (StrMatch(name, "lewd", isPart)
+            {
+                matched = true;
+                AddTag(armorEditObj, SLA_ArmorHalfNaked);
+            }
             //SLA_PantiesNormal
             if (StrMatch(name, "panties", isPart)
                 || StrMatch(name, "panty", isPart)
