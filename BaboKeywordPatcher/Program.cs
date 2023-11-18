@@ -292,7 +292,7 @@ namespace BaboKeywordPatcher
             if ((IsDeviousRenderedItem(name) && StrMatch(name, "boots", isPart))
                 || (StrMatch(name, "heels", isPart) && !StrMatch(name, "wheel", isPart) && bodyTemplate != null && bodyTemplate.FirstPersonFlags.HasFlag(BipedObjectFlag.Feet)))
                 || StrMatch(name, "boots", isPart)
-                || StrMatch(name, "heel", isPart))
+                || StrMatch(name, "heel", isPart)))
             {
                 matched = true;
                 AddTag(armorEditObj, SLA_BootsHeels);
