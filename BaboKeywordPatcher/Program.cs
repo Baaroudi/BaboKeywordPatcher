@@ -95,6 +95,7 @@ namespace BaboKeywordPatcher
         public static IKeywordGetter? SLA_MiniSkirt;
         public static IKeywordGetter? SLA_ArmorHalfNakedBikini;
         public static IKeywordGetter? SLA_ArmorHalfNaked;
+        public static IKeywordGetter? SLA_ArmorLewdLeotard;
 
         public static void LoadKeywords(IPatcherState<ISkyrimMod, ISkyrimModGetter> state)
         {
@@ -135,6 +136,7 @@ namespace BaboKeywordPatcher
             SLA_MiniSkirt = LoadKeyword(state, "SLA_MiniSkirt");
             SLA_ArmorHalfNakedBikini = LoadKeyword(state, "SLA_ArmorHalfNakedBikini");
             SLA_ArmorHalfNaked = LoadKeyword(state, "SLA_ArmorHalfNaked");
+            SLA_ArmorLewdLeotard = LoadKeyword(state, "SLA_ArmorLewdLeotard");
         }
 
         private static void AddTag(Armor armorEditObj, IKeywordGetter tag)
@@ -242,10 +244,13 @@ namespace BaboKeywordPatcher
             // EroticArmor
             if (StrMatch(name, "suit", isPart)
                 || StrMatch(name, "cuirass", isPart)
+                || StrMatch(name, "top", isPart)
+                || StrMatch(name, "qipao", isPart)
                 || StrMatch(name, "latex", isPart)
                 || StrMatch(name, "rubber", isPart)
                 || StrMatch(name, "ebonite", isPart)
                 || StrMatch(name, "slut", isPart)
+                || StrMatch(name, "slutty", isPart)
                 || StrMatch(name, "lingerie", isPart)
                 || (StrMatch(name, "dress", isPart) && Settings.Value.EroticDresses)
                 )
@@ -286,6 +291,8 @@ namespace BaboKeywordPatcher
             IBodyTemplateGetter? bodyTemplate = armor.BodyTemplate;
             if ((IsDeviousRenderedItem(name) && StrMatch(name, "boots", isPart))
                 || (StrMatch(name, "heels", isPart) && !StrMatch(name, "wheel", isPart) && bodyTemplate != null && bodyTemplate.FirstPersonFlags.HasFlag(BipedObjectFlag.Feet)))
+                || StrMatch(name, "boots", isPart)
+                || StrMatch(name, "heel", isPart))
             {
                 matched = true;
                 AddTag(armorEditObj, SLA_BootsHeels);
@@ -308,6 +315,7 @@ namespace BaboKeywordPatcher
             // SLA_AnalPlug
             if (StrMatch(name, "anal", isPart)
                 || StrMatch(name, "buttplug", isPart)
+                || StrMatch(name, "bplug", isPart)
                 || StrMatch(name, "vibrator", isPart))
             {
                 matched = true;
@@ -344,7 +352,9 @@ namespace BaboKeywordPatcher
                 matched = true;
                 AddTag(armorEditObj, SLA_BraArmor);
             }
-            if (StrMatch(name, "bikini", isPart))
+            // SLA_ArmorHalfNakedBikini
+            if (StrMatch(name, "bikini", isPart)
+                || StrMatch(name, "kini", isPart))
             {
                 matched = true;
                 AddTag(armorEditObj, SLA_ArmorHalfNakedBikini);
@@ -357,10 +367,18 @@ namespace BaboKeywordPatcher
                 AddTag(armorEditObj, SLA_ThongT);
             }
             // SLA_ArmorHalfNaked
-            if (StrMatch(name, "lewd", isPart))
+            if (StrMatch(name, "lewd", isPart)
+                || StrMatch(name, "slutty", isPart)
+                || StrMatch(name, "xtra", isPart))
             {
                 matched = true;
                 AddTag(armorEditObj, SLA_ArmorHalfNaked);
+            }
+            // SLA_ArmorLewdLeotard
+            if (StrMatch(name, "leotard", isPart))
+            {
+                matched = true;
+                AddTag(armorEditObj, SLA_ArmorLewdLeotard);
             }
             //SLA_PantiesNormal
             if (StrMatch(name, "panties", isPart)
