@@ -96,6 +96,7 @@ namespace BaboKeywordPatcher
         public static IKeywordGetter? SLA_ArmorHalfNakedBikini;
         public static IKeywordGetter? SLA_ArmorHalfNaked;
         public static IKeywordGetter? SLA_ArmorLewdLeotard;
+        public static IKeywordGetter? SLA_PelvicCurtain;
 
         public static void LoadKeywords(IPatcherState<ISkyrimMod, ISkyrimModGetter> state)
         {
@@ -414,6 +415,14 @@ namespace BaboKeywordPatcher
             {
                 matched = true;
                 AddTag(armorEditObj, SLA_MiniSkirt);
+            }
+            //SLA_PelvicCurtain
+            if (StrMatch(name, "faulds", isPart)
+                || StrMatch(name, "qipao", isPart)
+                || StrMatch(name, "loincloth", isPart))
+            {
+                matched = true;
+                AddTag(armorEditObj, SLA_PelvicCurtain);
             }
             // All vanilla armors
             if (Settings.Value.ArmorPrettyDefault && !matched && (StrMatch(name, "armor", true) || StrMatch(name, "cuiras", true) || StrMatch(name, "robes", true)))
